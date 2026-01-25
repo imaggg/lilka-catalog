@@ -6,7 +6,7 @@ sources:
 entryfile:
   type: lua
   location:
-    origin: https://raw.githubusercontent.com/andrijpv/LilkaCubes/refs/heads/main/filegame/lilkaсubes.lua
+    origin: https://raw.githubusercontent.com/andrijpv/LilkaCubes/refs/heads/main/lilkacubes.lua
 short_description: Проста та захоплююча гра в кубики, розроблена для консолі Lilka
 description: "@DESCRIPTION.md"
 author: "@andrijpv"
