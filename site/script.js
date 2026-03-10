@@ -124,6 +124,10 @@ class LilkaRepository {
         document.querySelectorAll('.tab-button').forEach(button => {
             button.addEventListener('click', (e) => {
                 const type = e.target.dataset.type;
+                // Track tab clicks
+                if (window.umami) {
+                    window.umami.track('tab-navigation', { tab: type });
+                }
                 if (type === 'docs') {
                     this.showDocumentation();
                 } else {
@@ -321,6 +325,14 @@ class LilkaRepository {
         `;
 
         card.addEventListener('click', () => {
+            // Track card clicks to view details
+            if (window.umami) {
+                window.umami.track('view-details', { 
+                    type: this.currentType, 
+                    name: manifest.name,
+                    item: manifestName 
+                });
+            }
             this.showModal(manifest, manifestName);
             // Update URL when opening modal
             this.updateURL(this.currentType, null, manifestName);
@@ -351,7 +363,7 @@ class LilkaRepository {
                             <h3>📦 Entry File</h3>
                             <p><strong>Type:</strong> ${this.escapeHtml(entryFile.type || 'N/A')}</p>
                             <p><strong>File:</strong> ${this.escapeHtml(entryFile.location || 'N/A')}</p>
-                            <a href="${downloadPath}" download class="download-btn">⬇️ Download Entry File</a>
+                            <a href="${downloadPath}" download class="download-btn" data-umami-event="download-entry-file" data-umami-event-app="${this.escapeHtml(manifest.name)}">⬇️ Download Entry File</a>
                         </div>
                     `;
                 }
@@ -369,7 +381,7 @@ class LilkaRepository {
                                 return `
                                     <div class="file-item">
                                         <p><strong>${this.escapeHtml(fileObj.type || 'Unknown')}:</strong> ${this.escapeHtml(fileObj.location || 'N/A')}</p>
-                                        <a href="${downloadPath}" download class="download-btn-small">⬇️ Download</a>
+                                        <a href="${downloadPath}" download class="download-btn-small" data-umami-event="download-additional-file" data-umami-event-app="${this.escapeHtml(manifest.name)}" data-umami-event-type="${this.escapeHtml(fileObj.type)}">⬇️ Download</a>
                                     </div>
                                 `;
                             }
@@ -391,7 +403,7 @@ class LilkaRepository {
                                 return `
                                     <div class="file-item">
                                         <p><strong>${this.escapeHtml(file.type || 'Unknown')}:</strong> ${this.escapeHtml(file.location || 'N/A')}</p>
-                                        <a href="${downloadPath}" download class="download-btn-small">⬇️ Download</a>
+                                        <a href="${downloadPath}" download class="download-btn-small" data-umami-event="download-mod-file" data-umami-event-mod="${this.escapeHtml(manifest.name)}" data-umami-event-type="${this.escapeHtml(file.type)}">⬇️ Download</a>
                                     </div>
                                 `;
                             }).join('')}
