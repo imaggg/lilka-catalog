@@ -873,6 +873,56 @@ def process_mods_folder(mods):
     progress.final_summary()
     return sorted(results)
         
+def gen_authors_index(apps, mods) -> None:
+    """Generate authors.json grouping all manifests by author."""
+    authors = {}
+
+    for app in apps:
+        manifest_path = os.path.join("./build", "apps", app, "index.json")
+        if os.path.exists(manifest_path):
+            try:
+                with open(manifest_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                author = data.get("author", "Unknown")
+                authors.setdefault(author, []).append({
+                    "name": data.get("name", app),
+                    "short_description": data.get("short_description", ""),
+                    "icon": data.get("icon", ""),
+                    "path": app,
+                    "type": "apps"
+                })
+            except Exception as e:
+                logger.warning(f"Failed to read manifest for authors index: {e}", app)
+
+    for mod in mods:
+        manifest_path = os.path.join("./build", "mods", mod, "index.json")
+        if os.path.exists(manifest_path):
+            try:
+                with open(manifest_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                author = data.get("author", "Unknown")
+                authors.setdefault(author, []).append({
+                    "name": data.get("name", mod),
+                    "short_description": data.get("short_description", ""),
+                    "icon": data.get("icon", ""),
+                    "path": mod,
+                    "type": "mods"
+                })
+            except Exception as e:
+                logger.warning(f"Failed to read manifest for authors index: {e}", mod)
+
+    # Sort authors alphabetically, sort items within each author
+    sorted_authors = {}
+    for author in sorted(authors.keys(), key=lambda a: a.lower()):
+        sorted_authors[author] = sorted(authors[author], key=lambda x: x["name"].lower())
+
+    output_path = os.path.join("./build", "authors.json")
+    with open(output_path, 'w', encoding='utf-8') as f:
+        json.dump(sorted_authors, f, indent=2, ensure_ascii=False)
+
+    logger.success(f"Generated authors.json with {len(sorted_authors)} authors")
+
+
 def main():
     start_time = time.time()
     
@@ -899,6 +949,7 @@ def main():
         print(f"\n\033[94mℹ️  Generating index files...\033[0m")
         gen_json_index_manifests(processed_apps, "app")
         gen_json_index_manifests(processed_mods, "mod")
+        gen_authors_index(processed_apps, processed_mods)
         print(f"\033[92m✅ Index files generated\033[0m")
     
     # Write warnings to JSON file

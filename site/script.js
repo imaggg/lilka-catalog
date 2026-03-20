@@ -32,6 +32,14 @@ class LilkaRepository {
       return;
     }
 
+    // Handle authors page
+    if (type === 'authors') {
+      this.currentType = type;
+      await this.showAuthors();
+      this.updateActiveTab('authors');
+      return;
+    }
+
     // Handle page navigation: ?type=apps&page=1
     if (type) {
       this.currentType = type;
@@ -52,8 +60,9 @@ class LilkaRepository {
     document.querySelector(`[data-type="${type}"]`).classList.add('active');
 
     // Show/hide appropriate content
-    document.getElementById('content').style.display = 'block';
-    document.getElementById('docs').style.display = 'none';
+    document.getElementById('content').style.display = (type === 'docs' || type === 'authors') ? 'none' : 'block';
+    document.getElementById('docs').style.display = type === 'docs' ? 'block' : 'none';
+    document.getElementById('authors').style.display = type === 'authors' ? 'block' : 'none';
   }
 
   async openDirectItem(type, itemName) {
@@ -130,6 +139,8 @@ class LilkaRepository {
         }
         if (type === 'docs') {
           this.showDocumentation();
+        } else if (type === 'authors') {
+          this.showAuthors();
         } else {
           this.switchType(type);
         }
@@ -215,8 +226,99 @@ class LilkaRepository {
     // Show/hide appropriate content
     document.getElementById('content').style.display = 'block';
     document.getElementById('docs').style.display = 'none';
+    document.getElementById('authors').style.display = 'none';
 
     await this.loadPage();
+  }
+
+  async showAuthors() {
+    this.updateActiveTab('authors');
+    document.getElementById('content').style.display = 'none';
+    document.getElementById('loading').style.display = 'none';
+    document.getElementById('error').style.display = 'none';
+    document.getElementById('docs').style.display = 'none';
+    const authorsContainer = document.getElementById('authors');
+    authorsContainer.style.display = 'block';
+
+    this.updateURL('authors');
+
+    try {
+      const response = await fetch('authors.json');
+      if (!response.ok) {
+        throw new Error('Failed to load authors data');
+      }
+      const authors = await response.json();
+      authorsContainer.innerHTML = this.renderAuthorsPage(authors);
+
+      // Add click handlers for author item cards
+      authorsContainer.querySelectorAll('.author-item-card').forEach(card => {
+        card.addEventListener('click', async () => {
+          const itemType = card.dataset.itemType;
+          const itemPath = card.dataset.itemPath;
+          try {
+            const manifestPath = `${itemType}/${itemPath}/index.json`;
+            const resp = await fetch(manifestPath);
+            if (!resp.ok) throw new Error(`Item not found: ${itemPath}`);
+            const manifest = await resp.json();
+            this.currentType = itemType;
+            this.showModal(manifest, itemPath);
+          } catch (err) {
+            console.error('Error opening item from authors:', err);
+          }
+        });
+      });
+
+      // Collapsible author sections
+      authorsContainer.querySelectorAll('.author-section-header').forEach(header => {
+        header.addEventListener('click', () => {
+          const section = header.closest('.author-section');
+          section.classList.toggle('collapsed');
+        });
+      });
+    } catch (error) {
+      authorsContainer.innerHTML =
+          `<p style="color: var(--error);">Failed to load authors: ${error.message}</p>`;
+    }
+  }
+
+  renderAuthorsPage(authors) {
+    const authorNames = Object.keys(authors);
+    let html = `<h2 class="authors-title">Authors (${authorNames.length})</h2>`;
+
+    for (const author of authorNames) {
+      const items = authors[author];
+      const apps = items.filter(i => i.type === 'apps');
+      const mods = items.filter(i => i.type === 'mods');
+      const badge = [];
+      if (apps.length) badge.push(`${apps.length} app${apps.length > 1 ? 's' : ''}`);
+      if (mods.length) badge.push(`${mods.length} mod${mods.length > 1 ? 's' : ''}`);
+
+      html += `<div class="author-section">`;
+      html += `<div class="author-section-header">`;
+      html += `<span class="author-section-name">${this.escapeHtml(author)}</span>`;
+      html += `<span class="author-section-badge">${badge.join(', ')}</span>`;
+      html += `<span class="author-section-toggle">&#9660;</span>`;
+      html += `</div>`;
+      html += `<div class="author-section-body">`;
+      html += `<div class="author-items-grid">`;
+
+      for (const item of items) {
+        const iconPath = item.icon ? `${item.type}/${item.path}/static/${item.icon}` : '';
+        const typeLabel = item.type === 'apps' ? 'App' : 'Mod';
+        html += `<div class="author-item-card" data-item-type="${item.type}" data-item-path="${this.escapeHtml(item.path)}">`;
+        if (item.icon) {
+          html += `<img src="${iconPath}" alt="${this.escapeHtml(item.name)}" class="icon" onerror="this.style.display='none'">`;
+        }
+        html += `<h3>${this.escapeHtml(item.name)}</h3>`;
+        html += `<span class="author-item-type type-${item.type}">${typeLabel}</span>`;
+        html += `<div class="short-desc">${this.escapeHtml(item.short_description)}</div>`;
+        html += `</div>`;
+      }
+
+      html += `</div></div></div>`;
+    }
+
+    return html;
   }
 
   async showDocumentation() {
@@ -230,6 +332,7 @@ class LilkaRepository {
     document.getElementById('content').style.display = 'none';
     document.getElementById('loading').style.display = 'none';
     document.getElementById('error').style.display = 'none';
+    document.getElementById('authors').style.display = 'none';
     const docsContainer = document.getElementById('docs');
     docsContainer.style.display = 'block';
 
