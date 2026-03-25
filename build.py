@@ -341,7 +341,7 @@ def compress_image(image_path, max_width=MAX_IMAGE_WIDTH, max_height=MAX_IMAGE_H
         logger.warning(f"Could not compress image {image_path}: {e}")
 
 # ============================================================================
-# Security: SHA-256 Checksums & Local ClamAV Scanning
+# Security: SHA-256 / MD5 Checksums & Local ClamAV Scanning
 # ============================================================================
 
 def compute_sha256(filepath):
@@ -354,6 +354,19 @@ def compute_sha256(filepath):
         return sha256.hexdigest()
     except Exception as e:
         logger.warning(f"Could not compute SHA-256 for {filepath}: {e}")
+        return None
+
+
+def compute_md5(filepath):
+    """Compute MD5 hash of a file."""
+    md5 = hashlib.md5()
+    try:
+        with open(filepath, 'rb') as f:
+            for chunk in iter(lambda: f.read(8192), b''):
+                md5.update(chunk)
+        return md5.hexdigest()
+    except Exception as e:
+        logger.warning(f"Could not compute MD5 for {filepath}: {e}")
         return None
 
 
@@ -461,7 +474,8 @@ def generate_security_info(output_dir, manifest, item_type):
         file_info = {
             "file": fname,
             "size": os.path.getsize(fpath),
-            "sha256": compute_sha256(fpath)
+            "sha256": compute_sha256(fpath),
+            "md5": compute_md5(fpath)
         }
 
         if args.antivirus and CLAMAV_AVAILABLE:

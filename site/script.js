@@ -625,19 +625,23 @@ class LilkaRepository {
 
     // Build security section
     let securitySection = '';
-    if (manifest.security && manifest.security.files && manifest.security.files.length > 0) {
+    if (manifest.security && manifest.security.files &&
+        manifest.security.files.length > 0) {
       const sec = manifest.security;
-      const scanDate = sec.scan_date ? new Date(sec.scan_date).toLocaleString() : 'N/A';
-      const allClean = sec.files.every(f => !f.av_scan || f.av_scan.status === 'clean');
+      const scanDate =
+          sec.scan_date ? new Date(sec.scan_date).toLocaleString() : 'N/A';
+      const allClean =
+          sec.files.every(f => !f.av_scan || f.av_scan.status === 'clean');
       const hasAvScan = sec.clamav_available && sec.files.some(f => f.av_scan);
 
       let overallBadge;
       if (hasAvScan) {
-        overallBadge = allClean
-          ? '<span class="security-badge security-clean">✅ All files clean</span>'
-          : '<span class="security-badge security-infected">⚠️ Threats detected</span>';
+        overallBadge = allClean ?
+            '<span class="security-badge security-clean">✅ All files clean</span>' :
+            '<span class="security-badge security-infected">⚠️ Threats detected</span>';
       } else {
-        overallBadge = '<span class="security-badge security-noav">🔒 Checksums only</span>';
+        overallBadge =
+            '<span class="security-badge security-noav">🔒 Checksums only</span>';
       }
 
       securitySection = `
@@ -645,18 +649,23 @@ class LilkaRepository {
           <h3>🛡️ Security</h3>
           <div class="security-header">
             ${overallBadge}
-            <span class="security-date">Scanned: ${this.escapeHtml(scanDate)}</span>
+            <span class="security-date">Scanned: ${
+          this.escapeHtml(scanDate)}</span>
           </div>
           <div class="security-files">
-            ${sec.files.map(f => {
-              const avBadge = f.av_scan
-                ? (f.av_scan.status === 'clean'
-                    ? '<span class="security-badge-sm security-clean">✅ Clean</span>'
-                    : f.av_scan.status === 'infected'
-                      ? '<span class="security-badge-sm security-infected">❌ ' + this.escapeHtml(f.av_scan.detail) + '</span>'
-                      : '<span class="security-badge-sm security-noav">' + this.escapeHtml(f.av_scan.detail) + '</span>')
-                : '';
-              return `
+            ${
+          sec.files
+              .map(f => {
+                const avBadge = f.av_scan ?
+                    (f.av_scan.status === 'clean' ?
+                         '<span class="security-badge-sm security-clean">✅ Clean</span>' :
+                         f.av_scan.status === 'infected' ?
+                         '<span class="security-badge-sm security-infected">❌ ' +
+                             this.escapeHtml(f.av_scan.detail) + '</span>' :
+                         '<span class="security-badge-sm security-noav">' +
+                             this.escapeHtml(f.av_scan.detail) + '</span>') :
+                    '';
+                return `
                 <div class="security-file-item">
                   <div class="security-file-name">
                     <strong>${this.escapeHtml(f.file)}</strong>
@@ -664,13 +673,27 @@ class LilkaRepository {
                   </div>
                   <div class="security-file-details">
                     <span class="security-hash" title="SHA-256 checksum">
-                      🔑 <code>${f.sha256 ? f.sha256.substring(0, 16) + '…' : 'N/A'}</code>
-                      ${f.sha256 ? '<button class="copy-hash-btn" data-hash="' + f.sha256 + '" title="Copy full SHA-256">📋</button>' : ''}
+                      🔑 SHA-256: <code>${
+                    f.sha256 ? f.sha256.substring(0, 16) + '…' : 'N/A'}</code>
+                      ${
+                    f.sha256 ?
+                        '<button class="copy-hash-btn" data-hash="' + f.sha256 +
+                            '" title="Copy full SHA-256">📋</button>' :
+                        ''}
                     </span>
-                    <span class="security-size">${f.size ? (f.size / 1024).toFixed(1) + ' KB' : ''}</span>
+                    <span class="security-hash" title="MD5 checksum">
+                      🔑 MD5: <code>${f.md5 ? f.md5 : 'N/A'}</code>
+                      ${
+                    f.md5 ? '<button class="copy-hash-btn" data-hash="' +
+                            f.md5 + '" title="Copy MD5">📋</button>' :
+                            ''}
+                    </span>
+                    <span class="security-size">${
+                    f.size ? (f.size / 1024).toFixed(1) + ' KB' : ''}</span>
                   </div>
                 </div>`;
-            }).join('')}
+              })
+              .join('')}
           </div>
         </div>
       `;
